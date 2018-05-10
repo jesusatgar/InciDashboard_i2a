@@ -2,14 +2,23 @@ package com.uniovi.cucumber.steps;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.List;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.uniovi.cucumber.pageobjects.PO_View;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
@@ -40,6 +49,31 @@ public class AdminStep {
 		// Cerramos el navegador al finalizar las pruebas
 		driver.quit();
 	}
+	
+	@BeforeClass
+    public static void setUp() throws IOException {
+        String travisCiFlag = System.getenv().get("TRAVIS");
+        FirefoxBinary firefoxBinary = "true".equals(travisCiFlag)
+                ? getFirefoxBinaryForTravisCi()
+                : new FirefoxBinary();
+ 
+        driver = new FirefoxDriver();
+    }
+ 
+    private static FirefoxBinary getFirefoxBinaryForTravisCi() throws IOException {
+        String firefoxPath = getFirefoxPath(); 
+        return new FirefoxBinary(new File(firefoxPath));
+    }
+ 
+    private static String getFirefoxPath() throws IOException {
+        ProcessBuilder pb = new ProcessBuilder("which", "firefox");
+        pb.redirectErrorStream(true);
+        Process process = pb.start();
+        try (InputStreamReader isr = new InputStreamReader(process.getInputStream(), "UTF-8");
+             BufferedReader br = new BufferedReader(isr)) {
+            return br.readLine();
+        }
+    }
 	
 	@Given("^a logged in admin$")
 	public void aLoggedInAdmin(){
